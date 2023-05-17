@@ -1,35 +1,44 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { ChangeEventHandler, useState } from 'react';
+import useRefCallback from './hooks/useRefCallback';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [videoRef, videoElement] = useRefCallback<HTMLVideoElement>();
+  const [videoUrl, setVideoUrl] = useState<string>();
+  const [currentTime, setCurrentTime] = useState<number>();
+
+  const playSelectedFile: ChangeEventHandler<HTMLInputElement> = ({
+    target,
+  }) => {
+    if (!target.files) return;
+    const file = target.files[0];
+    const { type } = file;
+    const canPlay = (videoElement as HTMLVideoElement).canPlayType(type);
+    if (!canPlay) {
+      console.error('Video type cannot be played!');
+      return;
+    }
+
+    const fileURL = window.URL.createObjectURL(file);
+    setVideoUrl(fileURL);
+  };
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {!videoUrl && (
+        <input type="file" accept="video/*" onChange={playSelectedFile} />
+      )}
+      <video
+        controls
+        ref={videoRef}
+        src={videoUrl}
+        style={{ display: videoUrl ? 'block' : 'none' }}
+        onTimeUpdate={() =>
+          setCurrentTime((videoElement as HTMLVideoElement).currentTime)
+        }
+      />
+      {currentTime}
     </>
-  )
+  );
 }
 
-export default App
+export default App;
