@@ -1,11 +1,28 @@
-video, input {
-  display: block;
+body {
+  margin: 0;
+  padding: 1vh;
 }
 
 input {
-  width: 100%;       
+  display: block;
+  width: 100%;
 }
 
-video{
-  height: 720px;
+video {
+  max-width: 100vw;
+  max-height: 90vh;
+}
+
+button {
+  margin: 5px;
+  padding: 5px;
+  font-weight: bold;
+  border: 2px solid green;
+  border-radius: 5px;
+  background-color: lightgreen;
+  cursor: pointer;
+  &.selected {
+    background-color: lightcoral;
+    border-color: red;
+  }
 }
