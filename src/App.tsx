@@ -1,4 +1,4 @@
-import { ChangeEventHandler, useState } from 'react';
+import { ChangeEventHandler, Ref, useState } from 'react';
 import useRefCallback from './hooks/useRefCallback';
 import useForceUpdate from './hooks/useForceUpdate';
 
@@ -6,6 +6,7 @@ const FPS = 50;
 function App() {
   const forceUpdate = useForceUpdate();
   const [videoRef, videoElement] = useRefCallback<HTMLVideoElement>();
+  const video = videoElement as HTMLVideoElement;
   const [videoUrl, setVideoUrl] = useState<string>();
   const [currentTime, setCurrentTime] = useState<number>();
 
@@ -37,11 +38,10 @@ function App() {
   };
 
   const updateCurrentTimeWith = (seconds: number) => () => {
-    if (videoElement) videoElement.currentTime += seconds;
+    video.currentTime += seconds;
   };
 
   const updatePlaybackRate = (speed: number) => () => {
-    const video = videoElement as HTMLVideoElement;
     if (video.playbackRate != speed) {
       video.playbackRate = speed;
       forceUpdate();
@@ -61,7 +61,7 @@ function App() {
       )}
       <video
         controls
-        ref={videoRef}
+        ref={videoRef as Ref<HTMLVideoElement>}
         src={videoUrl}
         style={{ display: videoUrl ? 'block' : 'none' }}
         onTimeUpdate={handleTimeUpdate}
@@ -80,25 +80,25 @@ function App() {
           <p>
             <button
               onClick={updatePlaybackRate(0.5)}
-              className={videoElement.playbackRate == 0.5 ? 'selected' : ''}
+              className={video.playbackRate == 0.5 ? 'selected' : ''}
             >
               0.5x speed
             </button>
             <button
               onClick={updatePlaybackRate(1)}
-              className={videoElement.playbackRate == 1 ? 'selected' : ''}
+              className={video.playbackRate == 1 ? 'selected' : ''}
             >
               normal speed
             </button>
             <button
               onClick={updatePlaybackRate(2)}
-              className={videoElement.playbackRate == 2 ? 'selected' : ''}
+              className={video.playbackRate == 2 ? 'selected' : ''}
             >
               {'>>'} 2x speed {'>>'}
             </button>
             <button
               onClick={updatePlaybackRate(10)}
-              className={videoElement.playbackRate == 10 ? 'selected' : ''}
+              className={video.playbackRate == 10 ? 'selected' : ''}
             >
               {'>>>'} 10x speed {'>>>'}
             </button>

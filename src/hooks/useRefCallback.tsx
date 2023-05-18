@@ -6,6 +6,6 @@ function useRefCallback<T>() {
   const setRef = useCallback((node: HTMLElement) => {
     setNode(node);
   }, []) as Ref<T>;
-  return [setRef, node as T];
+  return [setRef as Ref<T>, node as T];
 }
 export default useRefCallback;
