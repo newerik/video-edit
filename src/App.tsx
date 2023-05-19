@@ -1,3 +1,4 @@
+import Big from 'big.js';
 import { ChangeEventHandler, Ref, useState } from 'react';
 import useRefCallback from './hooks/useRefCallback';
 import useForceUpdate from './hooks/useForceUpdate';
@@ -8,7 +9,8 @@ function App() {
   const [videoRef, videoElement] = useRefCallback<HTMLVideoElement>();
   const video = videoElement as HTMLVideoElement;
   const [videoUrl, setVideoUrl] = useState<string>();
-  const [currentTime, setCurrentTime] = useState<number>();
+  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [timeStamps, setTimeStamps] = useState<number[]>([]);
 
   const playSelectedFile: ChangeEventHandler<HTMLInputElement> = ({
     target,
@@ -27,14 +29,15 @@ function App() {
   };
 
   const handleTimeUpdate = () => {
-    let currentTime = (videoElement as HTMLVideoElement).currentTime;
-    const leftOver = currentTime % (1 / FPS);
-    if (leftOver < 1 / FPS / 2) {
-      currentTime -= leftOver;
+    let currentTime = Big((videoElement as HTMLVideoElement).currentTime);
+    const leftOver = currentTime.mod(Big(1).div(Big(FPS)));
+    console.log({ currentTime, leftOver });
+    if (leftOver.toNumber() < 1 / FPS / 2) {
+      currentTime = currentTime.minus(leftOver);
     } else {
-      currentTime += 1 / FPS - leftOver;
+      currentTime = currentTime.plus(Big(1).div(Big(FPS)).minus(leftOver));
     }
-    setCurrentTime(currentTime);
+    setCurrentTime(Big(currentTime).toNumber());
   };
 
   const updateCurrentTimeWith = (seconds: number) => () => {
@@ -54,6 +57,13 @@ function App() {
     }
   };
 
+  const addTimeStamp = () => {
+    handleTimeUpdate();
+    setTimeStamps(
+      [...new Set([...timeStamps, currentTime])].sort((a, b) => a - b)
+    );
+  };
+
   return (
     <>
       {!videoUrl && (
@@ -66,16 +76,23 @@ function App() {
         style={{ display: videoUrl ? 'block' : 'none' }}
         onTimeUpdate={handleTimeUpdate}
       />
-      <p>{currentTime}</p>
       {videoUrl && (
         <>
           <p>
-            <button onClick={updateCurrentTimeWith(-10)}>-10 second</button>
+            <button onClick={updateCurrentTimeWith(-10)} className="big">
+              -10 second
+            </button>
             <button onClick={updateCurrentTimeWith(-1)}>-1 second</button>
-            <button onClick={updateCurrentTimeWith(-1 / FPS)}>-1 frame</button>
-            <button onClick={updateCurrentTimeWith(1 / FPS)}>+1 frame</button>
+            <button onClick={updateCurrentTimeWith(-1 / FPS)} className="small">
+              -1 frame
+            </button>
+            <button onClick={updateCurrentTimeWith(1 / FPS)} className="small">
+              +1 frame
+            </button>
             <button onClick={updateCurrentTimeWith(1)}>+1 second</button>
-            <button onClick={updateCurrentTimeWith(10)}>+10 second</button>
+            <button onClick={updateCurrentTimeWith(10)} className="big">
+              +10 second
+            </button>
           </p>
           <p>
             <button
@@ -102,6 +119,14 @@ function App() {
             >
               {'>>>'} 10x speed {'>>>'}
             </button>
+          </p>
+          <p>
+            <button onClick={addTimeStamp}>Add Time stamp</button>
+            <ul>
+              {timeStamps.map((stamp) => (
+                <li key={stamp}>{stamp.toFixed(2)}</li>
+              ))}
+            </ul>
           </p>
         </>
       )}

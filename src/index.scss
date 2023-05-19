@@ -14,8 +14,9 @@ video {
 }
 
 button {
+  display: inline-block;
   margin: 5px;
-  padding: 5px;
+  padding: 8px;
   font-weight: bold;
   border: 2px solid green;
   border-radius: 5px;
@@ -25,4 +26,16 @@ button {
     background-color: lightcoral;
     border-color: red;
   }
+  &.big {
+    padding: 12px;
+  }
+  &.small {
+    padding: 4px;
+  }
+}
+
+ul {
+  margin: 0.3em 0;
+  display: inline-block;
+  vertical-align: top;
 }
