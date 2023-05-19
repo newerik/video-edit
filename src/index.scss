@@ -10,7 +10,7 @@ input {
 
 video {
   max-width: 100vw;
-  max-height: 90vh;
+  max-height: 70vh;
 }
 
 button {
@@ -26,16 +26,24 @@ button {
     background-color: lightcoral;
     border-color: red;
   }
+  &.blue {
+    background-color: lightblue;
+    border-color: blue;
+  }
   &.big {
+    margin: 7px;
     padding: 9px 12px;
   }
   &.small {
+    margin: 3px;
     padding: 3px 6px;
   }
 }
 
 ul {
-  margin: 0.3em 0;
+  margin: 0.3em 2em;
+  padding: 0;
+  list-style: none;
   display: inline-block;
   vertical-align: top;
 }
