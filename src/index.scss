@@ -16,21 +16,21 @@ video {
 button {
   display: inline-block;
   margin: 5px;
-  padding: 8px;
+  padding: 5px 8px;
   font-weight: bold;
   border: 2px solid green;
   border-radius: 5px;
   background-color: lightgreen;
   cursor: pointer;
-  &.selected {
+  &.red {
     background-color: lightcoral;
     border-color: red;
   }
   &.big {
-    padding: 12px;
+    padding: 9px 12px;
   }
   &.small {
-    padding: 4px;
+    padding: 3px 6px;
   }
 }
 

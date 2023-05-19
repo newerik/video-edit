@@ -64,6 +64,12 @@ function App() {
     );
   };
 
+  const removeTimeStamp = (timeStamp: number) => () => {
+    const newTimeStamps = new Set(timeStamps);
+    newTimeStamps.delete(timeStamp);
+    setTimeStamps([...newTimeStamps]);
+  };
+
   return (
     <>
       {!videoUrl && (
@@ -97,25 +103,25 @@ function App() {
           <p>
             <button
               onClick={updatePlaybackRate(0.5)}
-              className={video.playbackRate == 0.5 ? 'selected' : ''}
+              className={video.playbackRate == 0.5 ? 'red' : ''}
             >
               0.5x speed
             </button>
             <button
               onClick={updatePlaybackRate(1)}
-              className={video.playbackRate == 1 ? 'selected' : ''}
+              className={video.playbackRate == 1 ? 'red' : ''}
             >
               normal speed
             </button>
             <button
               onClick={updatePlaybackRate(2)}
-              className={video.playbackRate == 2 ? 'selected' : ''}
+              className={video.playbackRate == 2 ? 'red' : ''}
             >
               {'>>'} 2x speed {'>>'}
             </button>
             <button
               onClick={updatePlaybackRate(10)}
-              className={video.playbackRate == 10 ? 'selected' : ''}
+              className={video.playbackRate == 10 ? 'red' : ''}
             >
               {'>>>'} 10x speed {'>>>'}
             </button>
@@ -124,7 +130,15 @@ function App() {
             <button onClick={addTimeStamp}>Add Time stamp</button>
             <ul>
               {timeStamps.map((stamp) => (
-                <li key={stamp}>{stamp.toFixed(2)}</li>
+                <li key={stamp}>
+                  <button
+                    className="red small"
+                    onClick={removeTimeStamp(stamp)}
+                  >
+                    ×
+                  </button>{' '}
+                  {stamp.toFixed(2)}
+                </li>
               ))}
             </ul>
           </p>
