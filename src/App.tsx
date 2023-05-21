@@ -1,52 +1,25 @@
+import { ChangeEvent, Ref, useState } from 'react';
 import Big from 'big.js';
-import { ChangeEventHandler, Ref, useState } from 'react';
-import useRefCallback from './hooks/useRefCallback';
 import useForceUpdate from './hooks/useForceUpdate';
+import useVideoFile from './hooks/useVideoFile';
+import secToFfmpegTime from './libs/secToFfmpegTime';
 
 const FPS = 50;
 
-const pad = (input: Big, length = 2) => input.toString().padStart(length, '0');
-
-const toTime = (seconds: number): string => {
-  const bigSec = Big(seconds);
-  const MILLISECONDS = bigSec.mod(1).times(1000);
-  const MS = MILLISECONDS.div(1000);
-  const SS = bigSec.minus(MS).mod(60);
-  const MM = bigSec.minus(MS).minus(SS).div(60).mod(60);
-  const HOURS = bigSec
-    .minus(MS)
-    .minus(SS)
-    .minus(MM.times(60))
-    .div(60 * 60);
-  return `${pad(HOURS)}:${pad(MM)}:${pad(SS)}.${pad(MILLISECONDS, 3)}`;
-};
-
 function App() {
   const forceUpdate = useForceUpdate();
-  const [videoRef, videoElement] = useRefCallback<HTMLVideoElement>();
-  const video = videoElement as HTMLVideoElement;
-  const [videoUrl, setVideoUrl] = useState<string>();
+  const [video, handleVideoInputChange] = useVideoFile();
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [timeStamps, setTimeStamps] = useState<number[]>([]);
+  const [sourceFolder, setSourceFolder] = useState<string>('');
+  const [targetFolder, setTargetFolder] = useState<string>('');
 
-  const playSelectedFile: ChangeEventHandler<HTMLInputElement> = ({
-    target,
-  }) => {
-    if (!target.files) return;
-    const file = target.files[0];
-    const { type } = file;
-    const canPlay = (videoElement as HTMLVideoElement).canPlayType(type);
-    if (!canPlay) {
-      console.error('Video type cannot be played!');
-      return;
-    }
-
-    const fileURL = window.URL.createObjectURL(file);
-    setVideoUrl(fileURL);
+  const handleInputChange = (setter: any) => (event: ChangeEvent) => {
+    setter(event.target.value);
   };
 
   const handleTimeUpdate = () => {
-    let currentTime = Big((videoElement as HTMLVideoElement).currentTime);
+    let currentTime = Big(video.elem.currentTime);
     const leftOver = currentTime.mod(Big(1).div(Big(FPS)));
     if (leftOver.toNumber() < 1 / FPS / 2) {
       currentTime = currentTime.minus(leftOver);
@@ -57,23 +30,23 @@ function App() {
   };
 
   const updateCurrentTime = (seconds: number) => () => {
-    video.currentTime = seconds;
+    video.elem.currentTime = seconds;
   };
 
   const updateCurrentTimeWith = (seconds: number) => () => {
-    video.currentTime += seconds;
+    video.elem.currentTime += seconds;
   };
 
   const updatePlaybackRate = (speed: number) => () => {
-    if (video.playbackRate != speed) {
-      video.playbackRate = speed;
+    if (video.elem.playbackRate != speed) {
+      video.elem.playbackRate = speed;
       forceUpdate();
       return;
     }
-    if (video.paused) {
-      video.play();
+    if (video.elem.paused) {
+      video.elem.play();
     } else {
-      video.pause();
+      video.elem.pause();
     }
   };
 
@@ -94,17 +67,17 @@ function App() {
 
   return (
     <>
-      {!videoUrl && (
-        <input type="file" accept="video/*" onChange={playSelectedFile} />
+      {!video.url && (
+        <input type="file" accept="video/*" onChange={handleVideoInputChange} />
       )}
       <video
         controls
-        ref={videoRef as Ref<HTMLVideoElement>}
-        src={videoUrl}
-        style={{ display: videoUrl ? 'block' : 'none' }}
+        ref={video.ref as Ref<HTMLVideoElement>}
+        src={video.url}
+        style={{ display: video.url ? 'block' : 'none' }}
         onTimeUpdate={handleTimeUpdate}
       />
-      {videoUrl && (
+      {video.url && (
         <>
           <p>
             <button onClick={updateCurrentTimeWith(-10)} className="big">
@@ -125,30 +98,30 @@ function App() {
           <p>
             <button
               onClick={updatePlaybackRate(0.5)}
-              className={video.playbackRate == 0.5 ? 'red' : ''}
+              className={video.elem.playbackRate == 0.5 ? 'red' : ''}
             >
               0.5x speed
             </button>
             <button
               onClick={updatePlaybackRate(1)}
-              className={video.playbackRate == 1 ? 'red' : ''}
+              className={video.elem.playbackRate == 1 ? 'red' : ''}
             >
               normal speed
             </button>
             <button
               onClick={updatePlaybackRate(2)}
-              className={video.playbackRate == 2 ? 'red' : ''}
+              className={video.elem.playbackRate == 2 ? 'red' : ''}
             >
               {'>>'} 2x speed {'>>'}
             </button>
             <button
               onClick={updatePlaybackRate(10)}
-              className={video.playbackRate == 10 ? 'red' : ''}
+              className={video.elem.playbackRate == 10 ? 'red' : ''}
             >
               {'>>>'} 10x speed {'>>>'}
             </button>
           </p>
-          <p>
+          <div>
             <button onClick={addTimeStamp}>Add Timestamp</button>
             {!!timeStamps.length && (
               <>
@@ -165,7 +138,7 @@ function App() {
                         onClick={updateCurrentTime(stamp)}
                         className="blue small"
                       >
-                        {toTime(stamp)}
+                        {secToFfmpegTime(stamp)}
                       </button>
                     </li>
                   ))}
@@ -174,6 +147,35 @@ function App() {
                   Clear all Timestamps
                 </button>
               </>
+            )}
+          </div>
+          <p>
+            {timeStamps.length == 2 ? (
+              <>
+                Source folder:
+                <input
+                  value={sourceFolder}
+                  onChange={handleInputChange(setSourceFolder)}
+                />
+                Target folder:
+                <input
+                  value={targetFolder}
+                  onChange={handleInputChange(setTargetFolder)}
+                />
+                Ffmpeg command:
+                <input
+                  readOnly
+                  value={`ffmpeg -accurate_seek -i "${sourceFolder}${
+                    video.name
+                  }" -ss ${secToFfmpegTime(
+                    timeStamps[0]
+                  )} -to ${secToFfmpegTime(
+                    timeStamps[1]
+                  )} -c copy "${targetFolder}cut_${video.name}"`}
+                />
+              </>
+            ) : (
+              'There must be two timestamps in order to cut'
             )}
           </p>
         </>
